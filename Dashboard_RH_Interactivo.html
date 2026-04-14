@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard RH · Pastelería Cati</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg:       #0A0E1A;
+    --bg2:      #111827;
+    --bg3:      #1C2333;
+    --border:   #1F2D45;
+    --navy:     #1A2C5B;
+    --red:      #E53E3E;
+    --redlt:    #FC8181;
+    --amber:    #D97706;
+    --amberlt:  #FCD34D;
+    --teal:     #0D9488;
+    --teallt:   #5EEAD4;
+    --gold:     #C89B3C;
+    --goldlt:   #F0C960;
+    --green:    #10B981;
+    --greenlt:  #6EE7B7;
+    --purple:   #7C3AED;
+    --purplelt: #C4B5FD;
+    --text:     #E2E8F0;
+    --textmid:  #94A3B8;
+    --textdim:  #475569;
+    --mono:     'Space Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ─────────────────────────────── */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--gold), var(--amber));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-weight: 700; font-size: 12px; color: #000;
+  }
+  .header-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .header-sub { font-size: 11px; color: var(--textmid); }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.3);
+    border-radius: 20px; padding: 4px 12px; font-size: 11px; color: var(--greenlt);
+    font-family: var(--mono);
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.2)} }
+
+  .date-display {
+    font-family: var(--mono); font-size: 11px; color: var(--textmid);
+    background: var(--bg3); border: 1px solid var(--border);
+    padding: 5px 12px; border-radius: 6px;
+  }
+
+  /* ── TABS ───────────────────────────────── */
+  .tabs {
+    display: flex; gap: 0;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 12px 20px; font-size: 12px; font-weight: 600;
+    color: var(--textmid); cursor: pointer; white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    font-family: var(--mono); letter-spacing: .5px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--goldlt); border-bottom-color: var(--gold); }
+
+  /* ── LAYOUT ─────────────────────────────── */
+  .page { display: none; padding: 24px 28px; }
+  .page.active { display: block; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 20px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-bottom: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; margin-bottom: 20px; }
+  .grid-7 { display: grid; grid-template-columns: repeat(7,1fr); gap: 10px; margin-bottom: 20px; }
+  .span2 { grid-column: span 2; }
+  .span3 { grid-column: span 3; }
+
+  /* ── CARDS ──────────────────────────────── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .card-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .card-title { font-size: 10px; font-weight: 600; color: var(--textmid); letter-spacing: 1.5px; text-transform: uppercase; font-family: var(--mono); }
+  .card-value { font-size: 36px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+  .card-sub { font-size: 11px; color: var(--textmid); margin-top: 4px; }
+
+  /* KPI badges */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: var(--mono); }
+  .badge-red { background: rgba(229,62,62,.15); color: var(--redlt); border: 1px solid rgba(229,62,62,.25); }
+  .badge-green { background: rgba(16,185,129,.12); color: var(--greenlt); border: 1px solid rgba(16,185,129,.25); }
+  .badge-amber { background: rgba(217,119,6,.15); color: var(--amberlt); border: 1px solid rgba(217,119,6,.25); }
+  .badge-teal { background: rgba(13,148,136,.15); color: var(--teallt); border: 1px solid rgba(13,148,136,.25); }
+  .badge-purple { background: rgba(124,58,237,.15); color: var(--purplelt); border: 1px solid rgba(124,58,237,.25); }
+
+  /* KPI Big Cards */
+  .kpi-red   .card-value { color: var(--redlt); }
+  .kpi-amber .card-value { color: var(--amberlt); }
+  .kpi-teal  .card-value { color: var(--teallt); }
+  .kpi-green .card-value { color: var(--greenlt); }
+  .kpi-gold  .card-value { color: var(--goldlt); }
+
+  /* Progress bar */
+  .progress-wrap { margin-top: 10px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--textmid); margin-bottom: 5px; font-family: var(--mono); }
+  .progress-bar { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 1.2s ease; }
+  .fill-red    { background: linear-gradient(90deg, var(--red), var(--redlt)); }
+  .fill-amber  { background: linear-gradient(90deg, var(--amber), var(--amberlt)); }
+  .fill-teal   { background: linear-gradient(90deg, var(--teal), var(--teallt)); }
+  .fill-green  { background: linear-gradient(90deg, #059669, var(--greenlt)); }
+  .fill-gold   { background: linear-gradient(90deg, var(--gold), var(--goldlt)); }
+
+  /* ── SECTION HEADER ──────────────────────── */
+  .section-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .section-title { font-size: 12px; font-weight: 700; color: var(--text); letter-spacing: 1px; text-transform: uppercase; font-family: var(--mono); }
+  .section-line { flex: 1; height: 1px; background: var(--border); }
+  .section-count { font-family: var(--mono); font-size: 10px; color: var(--textmid); }
+
+  /* ── TABLE ──────────────────────────────── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th {
+    text-align: left; padding: 8px 12px;
+    font-size: 9px; letter-spacing: 1.5px; font-weight: 700;
+    color: var(--textdim); text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+  }
+  .data-table td { padding: 9px 12px; border-bottom: 1px solid rgba(31,45,69,.5); vertical-align: middle; }
+  .data-table tr:hover td { background: rgba(31,45,69,.4); }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .dot-red    { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .dot-amber  { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .dot-green  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-purple { background: var(--purple); }
+  .dot-teal   { background: var(--teal); }
+
+  /* ── WEEKLY BOARD ────────────────────────── */
+  .weekly-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+  .weekly-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    position: relative; overflow: hidden;
+  }
+  .weekly-card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%; background: var(--accent, var(--teal));
+  }
+  .wc-label { font-size: 9px; color: var(--textmid); text-transform: uppercase; letter-spacing: 1.5px; font-family: var(--mono); margin-bottom: 6px; }
+  .wc-value { font-size: 28px; font-weight: 700; font-family: var(--mono); color: var(--accent, var(--teal)); }
+  .wc-delta { font-size: 10px; color: var(--textmid); margin-top: 3px; }
+
+  /* ── FOCO ROJO ──────────────────────────── */
+  .foco-card {
+    background: rgba(229,62,62,.06);
+    border: 1px solid rgba(229,62,62,.2);
+    border-radius: 10px; padding: 14px 16px;
+    position: relative;
+  }
+  .foco-header { font-size: 10px; font-weight: 700; color: var(--redlt); letter-spacing: 1px; text-transform: uppercase; font-family: var(--mono); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+
+  /* ── PROGRESS RING ──────────────────────── */
+  .ring-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .ring-label { position: absolute; text-align: center; }
+  .ring-pct { font-size: 18px; font-weight: 700; font-family: var(--mono); }
+  .ring-sub { font-size: 9px; color: var(--textmid); }
+
+  /* ── GANTT / TIMELINE ─────────────────────── */
+  .gantt-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .gantt-label { font-size: 11px; color: var(--textmid); width: 140px; flex-shrink: 0; }
+  .gantt-track { flex: 1; height: 28px; background: var(--bg3); border-radius: 4px; position: relative; overflow: hidden; }
+  .gantt-bar { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 10px; font-weight: 600; color: rgba(255,255,255,.9); position: absolute; transition: width 1.4s ease; }
+  .gantt-weeks { display: flex; justify-content: space-between; padding: 0 0 6px; }
+  .gantt-week { font-size: 9px; color: var(--textdim); font-family: var(--mono); width: calc(100%/6); text-align: center; }
+
+  /* ── ALERT PILL ─────────────────────────── */
+  .alert-pill {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px; margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .alert-pill.critical { background: rgba(229,62,62,.08); border: 1px solid rgba(229,62,62,.2); }
+  .alert-pill.warning  { background: rgba(217,119,6,.08); border: 1px solid rgba(217,119,6,.2); }
+  .alert-pill.info     { background: rgba(13,148,136,.08); border: 1px solid rgba(13,148,136,.2); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  canvas { display: block; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-mark">PC</div>
+    <div>
+      <div class="header-title">RH · Control de Sucursales</div>
+      <div class="header-sub">Pastelería Cati — Dashboard Ejecutivo</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="live-badge"><div class="live-dot"></div>SEMANA EN CURSO</div>
+    <div class="date-display" id="dateDisplay"></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('kpi')">📊 KPIs & METAS</div>
+  <div class="tab" onclick="showTab('tablero')">📋 TABLERO SEMANAL</div>
+  <div class="tab" onclick="showTab('sucursales')">🏪 TOP 10 SUCURSALES</div>
+  <div class="tab" onclick="showTab('visitas')">📅 PLAN DE VISITAS</div>
+  <div class="tab" onclick="showTab('acciones')">⚡ ACCIONES INMEDIATAS</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 1: KPIs & METAS -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-kpi" class="page active">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div class="section-title">Indicadores Críticos · Meta 60 días</div>
+    <div class="section-line"></div>
+    <div class="section-count">Inicio: 13 Abr 2025 → Meta: 13 Jun 2025</div>
+  </div>
+
+  <!-- 3 KPI cards principales -->
+  <div class="grid-3">
+    <div class="card kpi-red">
+      <div class="card-header">
+        <div>
+          <div class="card-title">% Reducción de Demandas</div>
+          <div class="card-value" id="kpi-demandas">−0%</div>
+          <div class="card-sub">Meta: <strong style="color:var(--redlt)">−35%</strong> en 60 días</div>
+        </div>
+        <div class="badge badge-red">🎯 META: −35%</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Avance actual</span><span id="pct-dem">0 / 35%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-red" id="bar-dem" style="width:0%"></div></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <span class="badge badge-red">Demandas activas: <strong>8</strong></span>
+        <span class="badge badge-amber">Riesgo alto: <strong>5</strong></span>
+      </div>
+    </div>
+
+    <div class="card kpi-amber">
+      <div class="card-header">
+        <div>
+          <div class="card-title">% Reducción de Rotación</div>
+          <div class="card-value" id="kpi-rotacion">−0%</div>
+          <div class="card-sub">Meta: <strong style="color:var(--amberlt)">−25%</strong> en 60 días</div>
+        </div>
+        <div class="badge badge-amber">🎯 META: −25%</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Avance actual</span><span id="pct-rot">0 / 25%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-amber" id="bar-rot" style="width:0%"></div></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <span class="badge badge-amber">Sucursales críticas: <strong>10</strong></span>
+        <span class="badge badge-red">Rotación >30%: <strong>3</strong></span>
+      </div>
+    </div>
+
+    <div class="card kpi-teal">
+      <div class="card-header">
+        <div>
+          <div class="card-title">% Mejora Percepción RH</div>
+          <div class="card-value" id="kpi-percepcion">+0%</div>
+          <div class="card-sub">Meta mínima: <strong style="color:var(--teallt)">+40%</strong> en 60 días</div>
+        </div>
+        <div class="badge badge-teal">🎯 MIN: +40%</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Avance actual</span><span id="pct-perc">0 / 40%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-teal" id="bar-perc" style="width:0%"></div></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <span class="badge badge-teal">Encuestas aplicadas: <strong>3</strong></span>
+        <span class="badge badge-amber">Pendientes: <strong>38</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Tendencia Semanal · Demandas & Rotación</div></div>
+      <canvas id="chartTendencia" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Distribución de Conflictos por Tipo</div></div>
+      <canvas id="chartDonut" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Metas adicionales -->
+  <div class="section-header"><div class="section-title">Sub-indicadores Operativos</div><div class="section-line"></div></div>
+  <div class="grid-4">
+    <div class="card kpi-green">
+      <div class="card-title">Sucursales Visitadas</div>
+      <div class="card-value">3</div>
+      <div class="card-sub">de 41 totales</div>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill fill-green" style="width:7.3%"></div></div>
+      </div>
+    </div>
+    <div class="card kpi-gold">
+      <div class="card-title">Encuestas Aplicadas</div>
+      <div class="card-value">3</div>
+      <div class="card-sub">Meta: 41 en 3 semanas</div>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill fill-gold" style="width:7.3%"></div></div>
+      </div>
+    </div>
+    <div class="card kpi-amber">
+      <div class="card-title">Líderes en Observación</div>
+      <div class="card-value">6</div>
+      <div class="card-sub">Seguimiento activo</div>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill fill-amber" style="width:60%"></div></div>
+      </div>
+    </div>
+    <div class="card kpi-red">
+      <div class="card-title">Sucursales Foco Rojo</div>
+      <div class="card-value">5</div>
+      <div class="card-sub">Intervención urgente</div>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill fill-red" style="width:50%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header"><div class="card-title">Radar de Salud Organizacional por Sucursal Crítica</div></div>
+    <div style="max-width:420px; margin:0 auto;">
+      <canvas id="chartRadar" height="300"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 2: TABLERO SEMANAL -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-tablero" class="page">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div class="section-title">Tablero Semanal · Semana del 13–19 Abr 2025</div>
+    <div class="section-line"></div>
+    <div class="section-count">Actualización: Lunes AM</div>
+  </div>
+
+  <!-- 8 weekly metrics -->
+  <div class="weekly-grid">
+    <div class="weekly-card" style="--accent:var(--red)">
+      <div class="wc-label">Quejas Nuevas</div>
+      <div class="wc-value">4</div>
+      <div class="wc-delta">▲ +1 vs semana anterior</div>
+    </div>
+    <div class="weekly-card" style="--accent:var(--amber)">
+      <div class="wc-label">Conflictos Activos</div>
+      <div class="wc-value">7</div>
+      <div class="wc-delta">= Sin cambio</div>
+    </div>
+    <div class="weekly-card" style="--accent:var(--redlt)">
+      <div class="wc-label">Demandas Laborales</div>
+      <div class="wc-value">8</div>
+      <div class="wc-delta">▲ +2 nuevas en proceso</div>
+    </div>
+    <div class="weekly-card" style="--accent:var(--purplelt)">
+      <div class="wc-label">Enojo de Empleados</div>
+      <div class="wc-value">12</div>
+      <div class="wc-delta">Nivel ALTO. Requiere acción</div>
+    </div>
+    <div class="weekly-card" style="--accent:var(--amberlt)">
+      <div class="wc-label">Conflicto entre Líderes</div>
+      <div class="wc-value">3</div>
+      <div class="wc-delta">▼ −1 resuelto esta semana</div>
+    </div>
+    <div class="weekly-card" style="--accent:var(--greenlt)">
+      <div class="wc-label">Casos Resueltos</div>
+      <div class="wc-value">2</div>
+      <div class="wc-delta">▲ +2 cierre confirmado</div>
+    </div>
+    <div class="weekly-card" style="--accent:var(--redlt)">
+      <div class="wc-label">Sucursales Foco Rojo</div>
+      <div class="wc-value">5</div>
+      <div class="wc-delta">Barragán, NIA, Vasconcelos +2</div>
+    </div>
+    <div class="weekly-card" style="--accent:var(--amberlt)">
+      <div class="wc-label">Líderes en Observación</div>
+      <div class="wc-value">6</div>
+      <div class="wc-delta">3 con plan correctivo activo</div>
+    </div>
+  </div>
+
+  <!-- Chart semanas -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Evolución Semanal de Incidentes</div></div>
+      <canvas id="chartSemanal" height="220"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Ratio Apertura vs Cierre de Casos</div></div>
+      <canvas id="chartRatio" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Sucursales sin personal -->
+  <div class="section-header"><div class="section-title">Sucursales Sin Personal / No Apertura</div><div class="section-line"></div></div>
+  <div class="card" style="margin-bottom:20px">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+      <div class="badge badge-red" style="font-size:11px;padding:5px 12px">🔴 Sin Personal Total: 0 activas</div>
+      <div class="badge badge-amber" style="font-size:11px;padding:5px 12px">🟡 Riesgo de no apertura: 5</div>
+      <div class="badge badge-teal" style="font-size:11px;padding:5px 12px">✅ Con cobertura completa: 36</div>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Sucursal</th><th>Status Personal</th><th>Última Apertura</th><th>Causa</th><th>Responsable</th><th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="status-dot dot-red"></span><strong>Barragán</strong></td>
+          <td><span class="badge badge-red">CRÍTICA</span></td>
+          <td style="font-family:var(--mono);font-size:11px">13/Abr/2025</td>
+          <td>Conflicto líder + 3 bajas simultáneas</td>
+          <td>HR BP asignado</td>
+          <td><span class="badge badge-amber">Plan activo</span></td>
+        </tr>
+        <tr>
+          <td><span class="status-dot dot-red"></span><strong>NIA</strong></td>
+          <td><span class="badge badge-red">CRÍTICA</span></td>
+          <td style="font-family:var(--mono);font-size:11px">13/Abr/2025</td>
+          <td>Rotación alta + demanda en proceso</td>
+          <td>HR BP asignado</td>
+          <td><span class="badge badge-amber">Plan activo</span></td>
+        </tr>
+        <tr>
+          <td><span class="status-dot dot-red"></span><strong>Vasconcelos</strong></td>
+          <td><span class="badge badge-red">CRÍTICA</span></td>
+          <td style="font-family:var(--mono);font-size:11px">13/Abr/2025</td>
+          <td>Líder conflictivo + 2 quejas activas</td>
+          <td>HR BP asignado</td>
+          <td><span class="badge badge-amber">Plan activo</span></td>
+        </tr>
+        <tr>
+          <td><span class="status-dot dot-amber"></span>Sucursal #12</td>
+          <td><span class="badge badge-amber">RIESGO</span></td>
+          <td style="font-family:var(--mono);font-size:11px">10/Abr/2025</td>
+          <td>Ausentismo elevado</td>
+          <td>Por asignar</td>
+          <td><span class="badge badge-teal">En evaluación</span></td>
+        </tr>
+        <tr>
+          <td><span class="status-dot dot-amber"></span>Sucursal #19</td>
+          <td><span class="badge badge-amber">RIESGO</span></td>
+          <td style="font-family:var(--mono);font-size:11px">11/Abr/2025</td>
+          <td>1 baja + reclutamiento activo</td>
+          <td>Por asignar</td>
+          <td><span class="badge badge-teal">Reclutamiento</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 3: TOP 10 SUCURSALES -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-sucursales" class="page">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div class="section-title">Top 10 Sucursales Críticas · Matriz de Riesgo</div>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Score de Riesgo por Sucursal (0–100)</div></div>
+      <canvas id="chartSucursales" height="280"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Mapa de Calor · Conflicto vs Rotación</div></div>
+      <canvas id="chartBubble" height="280"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Detalle Top 10 · Indicadores Operativos</div></div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Sucursal</th><th>Score Riesgo</th><th>Demandas</th><th>Rotación</th><th>Percepción RH</th><th>Líder Observación</th><th>Visitada</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tablaTop10"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 4: PLAN DE VISITAS -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-visitas" class="page">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div class="section-title">Plan de Visitas 41 Sucursales · 3 Semanas</div>
+    <div class="section-line"></div>
+    <div class="section-count">Inicio: 13 Abr 2025 — Cierre: 2 May 2025</div>
+  </div>
+
+  <!-- Progress general -->
+  <div class="grid-4" style="margin-bottom:20px">
+    <div class="card kpi-green">
+      <div class="card-title">Visitadas</div>
+      <div class="card-value">3</div>
+      <div class="card-sub">Barragán · NIA · Vasconcelos</div>
+    </div>
+    <div class="card kpi-amber">
+      <div class="card-title">Pendientes</div>
+      <div class="card-value">38</div>
+      <div class="card-sub">Sem 2–3: 13 c/u</div>
+    </div>
+    <div class="card kpi-teal">
+      <div class="card-title">Prog. Total</div>
+      <div class="card-value">7.3%</div>
+      <div class="card-sub">3 de 41</div>
+    </div>
+    <div class="card kpi-gold">
+      <div class="card-title">Días Restantes</div>
+      <div class="card-value" id="diasRestantes">—</div>
+      <div class="card-sub">para completar plan</div>
+    </div>
+  </div>
+
+  <!-- Gantt -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header"><div class="card-title">Gantt de Visitas por Semana</div></div>
+    <div class="gantt-weeks" style="padding-left:150px">
+      <div class="gantt-week">SEM 1<br><span style="font-size:8px;color:var(--textdim)">13–18 Abr</span></div>
+      <div class="gantt-week">SEM 2<br><span style="font-size:8px;color:var(--textdim)">21–25 Abr</span></div>
+      <div class="gantt-week">SEM 3<br><span style="font-size:8px;color:var(--textdim)">28 Abr–2 May</span></div>
+    </div>
+    <div id="ganttContainer"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Avance de Visitas · Semana 1 (Detalle)</div></div>
+    <canvas id="chartVisitas" height="180"></canvas>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB 5: ACCIONES INMEDIATAS -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-acciones" class="page">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div class="section-title">Panel de Acciones Inmediatas · Intervenciones Activas</div>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Líderes problemáticos -->
+    <div class="card">
+      <div class="foco-header">🔴 Intervención Directa — Líderes Problemáticos</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Líder</th><th>Sucursal</th><th>Motivo</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Enc. Barragán</td><td>Barragán</td>
+            <td>3 quejas directas + rotación 40%</td>
+            <td><span class="badge badge-red">Junta 1:1 pendiente</span></td>
+          </tr>
+          <tr>
+            <td>Enc. NIA</td><td>NIA</td>
+            <td>Demanda activa + clima negativo</td>
+            <td><span class="badge badge-amber">En proceso</span></td>
+          </tr>
+          <tr>
+            <td>Enc. Vasconcelos</td><td>Vasconcelos</td>
+            <td>Conflicto equipo + 2 bajas</td>
+            <td><span class="badge badge-amber">Junta agendada</span></td>
+          </tr>
+          <tr>
+            <td>Enc. Sucursal #7</td><td>Sucursal 7</td>
+            <td>Ausentismo + reporte de enojo</td>
+            <td><span class="badge badge-teal">Evaluación inicial</span></td>
+          </tr>
+          <tr>
+            <td>Enc. Sucursal #15</td><td>Sucursal 15</td>
+            <td>Queja anónima + rotación alta</td>
+            <td><span class="badge badge-teal">Visita programada</span></td>
+          </tr>
+          <tr>
+            <td>Enc. Sucursal #23</td><td>Sucursal 23</td>
+            <td>Conflicto entre líderes</td>
+            <td><span class="badge badge-purple">Mediación activa</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Plan correctivo -->
+    <div class="card">
+      <div class="foco-header">🟡 Planes Correctivos por Sucursal</div>
+      <div class="alert-pill critical">
+        <div>
+          <div style="font-weight:700;color:var(--redlt)">🔴 Barragán</div>
+          <div style="font-size:11px;color:var(--textmid);margin-top:2px">Junta 1:1 enc. → Firma plan → Seguimiento semanal → Evaluación 30 días</div>
+        </div>
+        <span class="badge badge-red" style="white-space:nowrap;margin-left:auto">Urgente</span>
+      </div>
+      <div class="alert-pill critical">
+        <div>
+          <div style="font-weight:700;color:var(--redlt)">🔴 NIA</div>
+          <div style="font-size:11px;color:var(--textmid);margin-top:2px">Asesoría legal → Acuerdo conciliatorio → Cambio de líder si persiste</div>
+        </div>
+        <span class="badge badge-red" style="white-space:nowrap;margin-left:auto">Urgente</span>
+      </div>
+      <div class="alert-pill critical">
+        <div>
+          <div style="font-weight:700;color:var(--redlt)">🔴 Vasconcelos</div>
+          <div style="font-size:11px;color:var(--textmid);margin-top:2px">Mediación conflicto → Capacitación líder → Encuesta de clima en 2 sem</div>
+        </div>
+        <span class="badge badge-amber" style="white-space:nowrap;margin-left:auto">Esta sem.</span>
+      </div>
+      <div class="alert-pill warning">
+        <div>
+          <div style="font-weight:700;color:var(--amberlt)">🟡 Sucursales nivel medio (7)</div>
+          <div style="font-size:11px;color:var(--textmid);margin-top:2px">Visita RH en sem 2 → Encuesta → Plan correctivo si necesario</div>
+        </div>
+        <span class="badge badge-amber" style="white-space:nowrap;margin-left:auto">Sem 2</span>
+      </div>
+      <div class="alert-pill info">
+        <div>
+          <div style="font-weight:700;color:var(--teallt)">🟢 Restantes (31)</div>
+          <div style="font-size:11px;color:var(--textmid);margin-top:2px">Visita preventiva → Presentación RH → Encuesta → Solo monitoreo</div>
+        </div>
+        <span class="badge badge-teal" style="white-space:nowrap;margin-left:auto">Sem 3</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Juntas 1:1 -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-header">
+      <div class="card-title">Agenda Juntas 1:1 con Encargados Conflictivos</div>
+      <span class="badge badge-amber">6 juntas programadas</span>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr><th>#</th><th>Encargado</th><th>Sucursal</th><th>Fecha</th><th>Objetivo</th><th>Resultado Esperado</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-family:var(--mono);color:var(--textmid)">01</td>
+          <td>Enc. Barragán</td><td>Barragán</td>
+          <td style="font-family:var(--mono);font-size:11px">14/Abr</td>
+          <td>Diagnóstico de conflicto + expectativas</td>
+          <td>Firma de compromisos</td>
+          <td><span class="badge badge-amber">Esta semana</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:var(--mono);color:var(--textmid)">02</td>
+          <td>Enc. NIA</td><td>NIA</td>
+          <td style="font-family:var(--mono);font-size:11px">15/Abr</td>
+          <td>Revisión demanda + posición empresa</td>
+          <td>Acuerdo o protocolo legal</td>
+          <td><span class="badge badge-amber">Esta semana</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:var(--mono);color:var(--textmid)">03</td>
+          <td>Enc. Vasconcelos</td><td>Vasconcelos</td>
+          <td style="font-family:var(--mono);font-size:11px">16/Abr</td>
+          <td>Mediación equipo + plan de comunicación</td>
+          <td>Acuerdo de convivencia</td>
+          <td><span class="badge badge-amber">Esta semana</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:var(--mono);color:var(--textmid)">04</td>
+          <td>Enc. Sucursal #7</td><td>Suc. 7</td>
+          <td style="font-family:var(--mono);font-size:11px">21/Abr</td>
+          <td>Evaluación clima + riesgo ausentismo</td>
+          <td>Plan de mejora</td>
+          <td><span class="badge badge-teal">Sem 2</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:var(--mono);color:var(--textmid)">05</td>
+          <td>Enc. Sucursal #15</td><td>Suc. 15</td>
+          <td style="font-family:var(--mono);font-size:11px">22/Abr</td>
+          <td>Retroalimentación anónima + rotación</td>
+          <td>Compromisos documentados</td>
+          <td><span class="badge badge-teal">Sem 2</span></td>
+        </tr>
+        <tr>
+          <td style="font-family:var(--mono);color:var(--textmid)">06</td>
+          <td>Enc. Sucursal #23</td><td>Suc. 23</td>
+          <td style="font-family:var(--mono);font-size:11px">23/Abr</td>
+          <td>Conflicto entre líderes + mediación</td>
+          <td>Protocolo de colaboración</td>
+          <td><span class="badge badge-teal">Sem 2</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ── DATE ──────────────────────────────────────
+const now = new Date();
+document.getElementById('dateDisplay').textContent =
+  now.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+
+const target = new Date('2025-05-02');
+const diff = Math.ceil((target - now)/(1000*60*60*24));
+const el = document.getElementById('diasRestantes');
+if(el) el.textContent = diff > 0 ? diff : 0;
+
+// ── TABS ──────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+  setTimeout(renderCharts, 50);
+}
+
+// ── ANIMATED COUNTERS ─────────────────────────
+function animateValue(el, start, end, duration, suffix='') {
+  let startTime = null;
+  function step(timestamp) {
+    if(!startTime) startTime = timestamp;
+    const progress = Math.min((timestamp-startTime)/duration, 1);
+    const val = Math.floor(progress*(end-start)+start);
+    el.textContent = (val>=0?'+':'')+val+suffix;
+    if(progress<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+setTimeout(()=>{
+  animateValue(document.getElementById('kpi-demandas'), 0, -8, 1500, '%');
+  animateValue(document.getElementById('kpi-rotacion'), 0, -5, 1500, '%');
+  animateValue(document.getElementById('kpi-percepcion'), 0, 7, 1500, '%');
+  // Progress bars
+  setTimeout(()=>{
+    document.getElementById('bar-dem').style.width  = '23%';
+    document.getElementById('bar-rot').style.width  = '20%';
+    document.getElementById('bar-perc').style.width = '18%';
+    document.getElementById('pct-dem').textContent  = '8 / 35%';
+    document.getElementById('pct-rot').textContent  = '5 / 25%';
+    document.getElementById('pct-perc').textContent = '7 / 40%';
+  }, 200);
+}, 400);
+
+// ── CHART DEFAULTS ────────────────────────────
+Chart.defaults.color = '#94A3B8';
+Chart.defaults.borderColor = '#1F2D45';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+let chartsRendered = false;
+
+function renderCharts() {
+  if(chartsRendered) return;
+  chartsRendered = true;
+
+  const NAVY = '#1A2C5B', RED = '#E53E3E', AMBER = '#D97706',
+        TEAL = '#0D9488', GREEN = '#10B981', GOLD = '#C89B3C',
+        PURPLE = '#7C3AED';
+
+  // 1. Tendencia semanal
+  new Chart(document.getElementById('chartTendencia'), {
+    type: 'line',
+    data: {
+      labels: ['Sem 1','Sem 2','Sem 3','Sem 4','Sem 5','Sem 6'],
+      datasets: [
+        { label:'Demandas', data:[10,10,8,8,null,null], borderColor:RED, backgroundColor:'rgba(229,62,62,.1)', tension:.4, fill:true, pointRadius:4, borderWidth:2 },
+        { label:'Rotación %', data:[32,32,30,null,null,null], borderColor:AMBER, backgroundColor:'rgba(217,119,6,.08)', tension:.4, fill:true, pointRadius:4, borderWidth:2 },
+        { label:'Percepción RH', data:[40,45,47,null,null,null], borderColor:TEAL, backgroundColor:'rgba(13,148,136,.08)', tension:.4, fill:true, pointRadius:4, borderWidth:2 },
+      ]
+    },
+    options: { responsive:true, plugins:{ legend:{position:'top'} }, scales:{ y:{grid:{color:'#1F2D45'}, ticks:{color:'#94A3B8'}}, x:{grid:{color:'#1F2D45'}, ticks:{color:'#94A3B8'}} } }
+  });
+
+  // 2. Donut conflictos
+  new Chart(document.getElementById('chartDonut'), {
+    type: 'doughnut',
+    data: {
+      labels:['Demandas activas','Quejas nuevas','Conflicto líderes','Enojo empleados','Resueltos'],
+      datasets:[{ data:[8,4,3,12,2], backgroundColor:[RED, AMBER, PURPLE, '#F97316', GREEN], borderWidth:0, hoverOffset:6 }]
+    },
+    options: { responsive:true, cutout:'68%', plugins:{ legend:{position:'right'} } }
+  });
+
+  // 3. Radar salud organizacional
+  new Chart(document.getElementById('chartRadar'), {
+    type: 'radar',
+    data: {
+      labels:['Clima Laboral','Percepción RH','Estabilidad Personal','Comunicación','Liderazgo','Rotación Baja'],
+      datasets:[
+        { label:'Barragán', data:[25,20,30,35,25,20], borderColor:RED, backgroundColor:'rgba(229,62,62,.15)', borderWidth:2, pointRadius:3 },
+        { label:'NIA', data:[30,25,25,30,30,25], borderColor:AMBER, backgroundColor:'rgba(217,119,6,.1)', borderWidth:2, pointRadius:3 },
+        { label:'Vasconcelos', data:[35,30,40,30,35,35], borderColor:PURPLE, backgroundColor:'rgba(124,58,237,.1)', borderWidth:2, pointRadius:3 },
+        { label:'Meta (60d)', data:[70,75,70,75,70,75], borderColor:TEAL, backgroundColor:'rgba(13,148,136,.05)', borderWidth:2, borderDash:[5,3], pointRadius:2 },
+      ]
+    },
+    options: { responsive:true, scales:{ r:{ min:0, max:100, grid:{color:'#1F2D45'}, ticks:{display:false}, pointLabels:{color:'#94A3B8', font:{size:10}} } }, plugins:{ legend:{position:'bottom', labels:{font:{size:10}}} } }
+  });
+
+  // 4. Semanal
+  new Chart(document.getElementById('chartSemanal'), {
+    type: 'bar',
+    data: {
+      labels: ['Lun','Mar','Mié','Jue','Vie'],
+      datasets: [
+        { label:'Nuevos', data:[1,1,1,0,1], backgroundColor:'rgba(229,62,62,.7)', borderRadius:4 },
+        { label:'Activos', data:[7,8,7,7,7], backgroundColor:'rgba(217,119,6,.7)', borderRadius:4 },
+        { label:'Resueltos', data:[0,0,1,0,1], backgroundColor:'rgba(16,185,129,.7)', borderRadius:4 },
+      ]
+    },
+    options: { responsive:true, plugins:{legend:{position:'top'}}, scales:{ x:{stacked:false, grid:{color:'#1F2D45'}}, y:{grid:{color:'#1F2D45'}} } }
+  });
+
+  // 5. Ratio apertura/cierre
+  new Chart(document.getElementById('chartRatio'), {
+    type: 'line',
+    data: {
+      labels:['Sem-3','Sem-2','Sem-1','Actual'],
+      datasets:[
+        { label:'Abiertos', data:[5,8,9,8], borderColor:RED, tension:.4, borderWidth:2, pointRadius:5, fill:false },
+        { label:'Cerrados', data:[3,2,3,2], borderColor:GREEN, tension:.4, borderWidth:2, pointRadius:5, fill:false },
+      ]
+    },
+    options: { responsive:true, plugins:{legend:{position:'top'}}, scales:{ y:{grid:{color:'#1F2D45'}}, x:{grid:{color:'#1F2D45'}} } }
+  });
+
+  // 6. Sucursales score
+  const suc = ['Barragán','NIA','Vasconcelos','Suc. #7','Suc. #15','Suc. #23','Suc. #5','Suc. #31','Suc. #18','Suc. #9'];
+  const scores = [91,86,82,71,68,63,58,54,50,47];
+  new Chart(document.getElementById('chartSucursales'), {
+    type: 'bar',
+    data: {
+      labels: suc,
+      datasets:[{ label:'Score de Riesgo', data:scores,
+        backgroundColor: scores.map(s=>s>=80?'rgba(229,62,62,.8)':s>=60?'rgba(217,119,6,.8)':'rgba(13,148,136,.8)'),
+        borderRadius:5, borderWidth:0 }]
+    },
+    options: { indexAxis:'y', responsive:true, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'#1F2D45'}, max:100}, y:{grid:{color:'#1F2D45'}, ticks:{font:{size:11}}} } }
+  });
+
+  // 7. Bubble
+  new Chart(document.getElementById('chartBubble'), {
+    type: 'bubble',
+    data: {
+      datasets:[{
+        label:'Sucursales',
+        data:[
+          {x:40,y:91,r:18},{x:35,y:86,r:16},{x:38,y:82,r:15},
+          {x:28,y:71,r:10},{x:22,y:68,r:9},{x:30,y:63,r:8},
+          {x:18,y:58,r:7},{x:15,y:54,r:7},{x:12,y:50,r:6},{x:10,y:47,r:5},
+        ],
+        backgroundColor:[
+          'rgba(229,62,62,.6)','rgba(229,62,62,.6)','rgba(229,62,62,.6)',
+          'rgba(217,119,6,.6)','rgba(217,119,6,.6)','rgba(217,119,6,.6)',
+          'rgba(13,148,136,.6)','rgba(13,148,136,.6)','rgba(13,148,136,.6)','rgba(13,148,136,.6)',
+        ]
+      }]
+    },
+    options: {
+      responsive:true,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=>`Rotación: ${ctx.raw.x}%  Score: ${ctx.raw.y}` } } },
+      scales: {
+        x:{ title:{display:true,text:'Rotación %',color:'#94A3B8'}, grid:{color:'#1F2D45'} },
+        y:{ title:{display:true,text:'Score Riesgo',color:'#94A3B8'}, grid:{color:'#1F2D45'} }
+      }
+    }
+  });
+
+  // 8. Visitas chart
+  new Chart(document.getElementById('chartVisitas'), {
+    type: 'bar',
+    data: {
+      labels:['Barragán','NIA','Vasconcelos','Suc.#4','Suc.#5','Suc.#6','Suc.#7','Suc.#8','Suc.#9','Suc.#10','Suc.#11','Suc.#12','Suc.#13'],
+      datasets:[
+        { label:'Visitadas', data:[1,1,1,0,0,0,0,0,0,0,0,0,0], backgroundColor:'rgba(16,185,129,.7)', borderRadius:4 },
+        { label:'Pendientes', data:[0,0,0,1,1,1,1,1,1,1,1,1,1], backgroundColor:'rgba(217,119,6,.3)', borderRadius:4 },
+      ]
+    },
+    options: { responsive:true, plugins:{legend:{position:'top'}}, scales:{ x:{grid:{color:'#1F2D45'}, stacked:true}, y:{grid:{color:'#1F2D45'}, stacked:true} } }
+  });
+}
+
+// ── TOP 10 TABLE ──────────────────────────────
+const top10Data = [
+  {n:'Barragán', score:91, dem:3, rot:'40%', perc:'22/100', lid:true, vis:true, status:'FOCO ROJO'},
+  {n:'NIA', score:86, dem:2, rot:'35%', perc:'25/100', lid:true, vis:true, status:'FOCO ROJO'},
+  {n:'Vasconcelos', score:82, dem:2, rot:'32%', perc:'28/100', lid:true, vis:true, status:'FOCO ROJO'},
+  {n:'Sucursal #7', score:71, dem:1, rot:'28%', perc:'35/100', lid:true, vis:false, status:'CRÍTICA'},
+  {n:'Sucursal #15', score:68, dem:1, rot:'25%', perc:'38/100', lid:true, vis:false, status:'CRÍTICA'},
+  {n:'Sucursal #23', score:63, dem:0, rot:'22%', perc:'40/100', lid:true, vis:false, status:'ALERTA'},
+  {n:'Sucursal #5', score:58, dem:0, rot:'20%', perc:'42/100', lid:false, vis:false, status:'ALERTA'},
+  {n:'Sucursal #31', score:54, dem:0, rot:'18%', perc:'45/100', lid:false, vis:false, status:'MONITOREO'},
+  {n:'Sucursal #18', score:50, dem:0, rot:'16%', perc:'48/100', lid:false, vis:false, status:'MONITOREO'},
+  {n:'Sucursal #9', score:47, dem:0, rot:'15%', perc:'50/100', lid:false, vis:false, status:'MONITOREO'},
+];
+
+const tbody = document.getElementById('tablaTop10');
+top10Data.forEach((r,i)=>{
+  const statusColor = r.status==='FOCO ROJO'?'badge-red':r.status==='CRÍTICA'?'badge-red':r.status==='ALERTA'?'badge-amber':'badge-teal';
+  const dotColor = r.score>=80?'dot-red':r.score>=60?'dot-amber':'dot-teal';
+  tbody.innerHTML += `<tr>
+    <td style="font-family:var(--mono);color:var(--textmid)">${String(i+1).padStart(2,'0')}</td>
+    <td><span class="status-dot ${dotColor}"></span><strong>${r.n}</strong></td>
+    <td style="font-family:var(--mono)"><span style="color:${r.score>=80?'var(--redlt)':r.score>=60?'var(--amberlt)':'var(--teallt)'}">${r.score}</span></td>
+    <td>${r.dem>0?'<span class="badge badge-red">'+r.dem+'</span>':'<span class="badge badge-green">0</span>'}</td>
+    <td style="font-family:var(--mono);color:var(--amberlt)">${r.rot}</td>
+    <td style="font-family:var(--mono)">${r.perc}</td>
+    <td>${r.lid?'<span class="badge badge-amber">Sí</span>':'<span class="badge badge-green">No</span>'}</td>
+    <td>${r.vis?'<span class="badge badge-green">✓ Sí</span>':'<span class="badge badge-amber">Pendiente</span>'}</td>
+    <td><span class="badge ${statusColor}">${r.status}</span></td>
+  </tr>`;
+});
+
+// ── GANTT ─────────────────────────────────────
+const ganttData = [
+  { label:'🔴 Barragán (crítica)', start:0, w:33.3, color:'rgba(229,62,62,.8)', week:1 },
+  { label:'🔴 NIA (crítica)', start:0, w:33.3, color:'rgba(229,62,62,.7)', week:1 },
+  { label:'🔴 Vasconcelos (crítica)', start:0, w:33.3, color:'rgba(229,62,62,.6)', week:1 },
+  { label:'Suc. #4 – #15 (12 suc.)', start:33.3, w:33.3, color:'rgba(217,119,6,.8)', week:2 },
+  { label:'Suc. #16 – #28 (13 suc.)', start:33.3, w:33.3, color:'rgba(217,119,6,.65)', week:2 },
+  { label:'Suc. #29 – #41 (13 suc.)', start:66.6, w:33.4, color:'rgba(13,148,136,.8)', week:3 },
+  { label:'Consolidación + Análisis', start:66.6, w:33.4, color:'rgba(124,58,237,.7)', week:3 },
+];
+const gc = document.getElementById('ganttContainer');
+ganttData.forEach(g=>{
+  gc.innerHTML += `
+  <div class="gantt-row">
+    <div class="gantt-label">${g.label}</div>
+    <div class="gantt-track">
+      <div class="gantt-bar" style="left:${g.start}%;width:${g.w}%;background:${g.color}">Sem ${g.week}</div>
+    </div>
+  </div>`;
+});
+
+// init charts
+setTimeout(renderCharts, 200);
+</script>
+</body>
+</html>
